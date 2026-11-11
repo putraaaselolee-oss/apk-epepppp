@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10121b">
+<title>FF FULL SKIN V2</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#10121b;color:white;
+ font-family:Arial,sans-serif
+}
+header{
+ padding:20px;text-align:center;
+ background:linear-gradient(120deg,#f07818,#9b2017);
+}
+header h1{margin:0;font-size:27px}
+header p{font-size:11px;letter-spacing:2px}
+.profile{
+ margin:14px;padding:16px;
+ background:#222a3a;border-radius:14px;
+ display:flex;justify-content:space-between;
+ align-items:center
+}
+.avatar{font-size:45px}
+.gold{color:#ffc342}
+nav{
+ display:flex;overflow-x:auto;gap:8px;
+ padding:10px
+}
+nav button{
+ flex-shrink:0;background:#252e40;
+ color:white;border:1px solid #ed8b26;
+ padding:12px;border-radius:8px
+}
+h3{margin:18px 15px 10px;color:#ffb13c}
+.search{padding:0 15px}
+.search input{
+ width:100%;padding:13px;border-radius:9px;
+ border:1px solid #555;background:#202a3c;color:white
+}
+#items{
+ display:grid;grid-template-columns:repeat(2,1fr);
+ gap:12px;padding:15px
+}
+.card{
+ background:#222a3a;padding:13px;
+ text-align:center;border-radius:12px;
+ border:1px solid #39435a
+}
+.card .emoji{font-size:48px;margin:10px}
+.card small{color:#b7c2d4}
+.card button,.action{
+ background:#ee8122;color:white;border:0;
+ padding:10px;border-radius:7px;margin-top:10px;
+ width:100%;font-weight:bold
+}
+.card button.equipped{background:#258c5b}
+.panel{
+ margin:15px;padding:15px;
+ background:#222a3a;border-radius:12px
+}
+.panel input{
+ width:100%;padding:12px;border-radius:7px;
+ border:0;margin:8px 0
+}
+footer{text-align:center;padding:25px;color:#8993a5}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🔥 FF FULL SKIN V2</h1>
+<p>ULTIMATE SKIN COLLECTION</p>
+</header>
+
+<div class="profile">
+ <div>
+  <h2 id="nickname">PLAYER FF</h2>
+  <p>ID: <span id="playerid">123456789</span></p>
+  <p class="gold">💎 999999 (SIMULASI)</p>
+ </div>
+ <div class="avatar">🥷</div>
+</div>
+
+<div class="panel">
+ <h3>🏠 LOBBY PLAYER</h3>
+ <div style="text-align:center;font-size:85px">🦸</div>
+ <p style="text-align:center">CHARACTER PREVIEW</p>
+ <p id="current">Belum ada item dipilih</p>
+</div>
+
+<h3>📦 INVENTARIS</h3>
+<nav id="navigation"></nav>
+
+<div class="search">
+ <input id="search" placeholder="Cari nama skin..." oninput="render()">
+</div>
+
+<h3 id="heading">KOLEKSI BUNDLE</h3>
+<div id="items"></div>
+
+<div class="panel">
+ <h3>💾 PRESET OUTFIT</h3>
+ <input id="presetName" placeholder="Nama preset">
+ <button class="action" onclick="savePreset()">SIMPAN PRESET</button>
+ <div id="presets"></div>
+</div>
+
+<div class="panel">
+ <h3>👤 EDIT PROFIL</h3>
+ <input id="newName" placeholder="Nickname baru">
+ <button class="action" onclick="changeName()">GANTI NICKNAME</button>
+</div>
+
+<footer>
+FF FULL SKIN V2<br>
+Fan-made simulator 2026<br>
+Bukan aplikasi resmi Garena
+</footer>
+
+<script>
+const database={
+ "Bundle":[
+ ["🥷","Shadow Ninja"],["👑","Royal King"],
+ ["🔥","Fire Warrior"],["🦸","Super Hero"],
+ ["🐉","Dragon Master"],["⚡","Thunder Suit"],
+ ["🌌","Galaxy Outfit"],["💀","Skull Warrior"],
+ ["🌙","Moon Phantom"],["🤖","Cyber Armor"]
+ ],
+ "Senjata":[
+ ["🔫","AK47 Skin"],["🎯","AWM Skin"],
+ ["💥","MP40 Skin"],["⚔️","M1887 Skin"],
+ ["🔱","SCAR Skin"],["🧨","UMP Skin"],
+ ["🏹","Woodpecker Skin"],["🔫","Groza Skin"]
+ ],
+ "Evo Gun":[
+ ["🐉","Dragon AK"],["🔥","Flame MP40"],
+ ["⚡","Lightning SCAR"],["💀","Skull M1887"],
+ ["🌌","Galaxy XM8"],["🦈","Shark AWM"]
+ ],
+ "Emote":[
+ ["💃","Dance"],["🕺","Victory Dance"],
+ ["👏","Clap"],["🤸","Acrobat"],
+ ["🪩","Party"],["👑","King Emote"]
+ ],
+ "Gloo Wall":[
+ ["🧊","Ice Wall"],["🐲","Dragon Wall"],
+ ["🔥","Flame Wall"],["💎","Diamond Wall"],
+ ["💀","Skull Wall"],["⚡","Thunder Wall"]
+ ],
+ "Karakter":[
+ ["🧑","Character Alpha"],["👩","Character Beta"],
+ ["🥷","Ninja Character"],["🤖","Robot Character"]
+ ],
+ "Pet":[
+ ["🐼","Panda"],["🐱","Cat"],["🐶","Dog"],
+ ["🦊","Fox"],["🐉","Dragon Pet"]
+ ],
+ "Tas & Helm":[
+ ["🎒","Legendary Bag"],["🪖","Helmet L3"],
+ ["🎒","Dragon Bag"],["🪖","Special Helmet"]
+ ]
+};
+
+let category="Bundle";
+let equipped=JSON.parse(localStorage.getItem("equipped")||"{}");
+
+const nav=document.getElementById("navigation");
+
+Object.keys(database).forEach(c=>{
+ let b=document.createElement("button");
+ b.textContent=c;
+ b.onclick=()=>selectCategory(c);
+ nav.appendChild(b);
+});
+
+function selectCategory(c){
+ category=c;
+ document.getElementById("heading").textContent=
+ "KOLEKSI "+c.toUpperCase();
+ render();
+}
+
+function render(){
+ const container=document.getElementById("items");
+ const q=document.getElementById("search").value.toLowerCase();
+ container.innerHTML="";
+
+ database[category]
+ .filter(x=>x[1].toLowerCase().includes(q))
+ .forEach(item=>{
+  const isOn=equipped[category]===item[1];
+  const card=document.createElement("div");
+  card.className="card";
+
+  const emoji=document.createElement("div");
+  emoji.className="emoji";
+  emoji.textContent=item[0];
+
+  const name=document.createElement("b");
+  name.textContent=item[1];
+
+  const info=document.createElement("p");
+  info.innerHTML="<small>Simulator Collection</small>";
+
+  const button=document.createElement("button");
+  button.textContent=isOn?"✓ EQUIPPED":"EQUIP";
+  button.className=isOn?"equipped":"";
+  button.onclick=()=>equip(item[1]);
+
+  card.append(emoji,name,info,button);
+  container.appendChild(card);
+ });
+}
+
+function equip(name){
+ equipped[category]=name;
+ localStorage.setItem("equipped",JSON.stringify(equipped));
+ document.getElementById("current").textContent=
+ "Terpilih: "+name;
+ render();
+}
+
+function savePreset(){
+ const name=document.getElementById("presetName").value.trim();
+ if(!name)return alert("Masukkan nama preset!");
+
+ let presets=JSON.parse(localStorage.getItem("presets")||"[]");
+ presets.push({name:name,items:{...equipped}});
+ localStorage.setItem("presets",JSON.stringify(presets));
+ document.getElementById("presetName").value="";
+ showPresets();
+ alert("Preset berhasil disimpan!");
+}
+
+function showPresets(){
+ const box=document.getElementById("presets");
+ box.innerHTML="";
+ let presets=JSON.parse(localStorage.getItem("presets")||"[]");
+
+ presets.forEach((p,i)=>{
+  const row=document.createElement("div");
+  row.style.marginTop="12px";
+
+  const label=document.createElement("span");
+  label.textContent=p.name+" ";
+
+  const load=document.createElement("button");
+  load.textContent="PAKAI";
+  load.onclick=()=>{
+   equipped=p.items;
+   localStorage.setItem("equipped",JSON.stringify(equipped));
+   document.getElementById("current").textContent=
+   "Preset: "+p.name;
+   render();
+  };
+
+  const del=document.createElement("button");
+  del.textContent="HAPUS";
+  del.style.marginLeft="8px";
+  del.onclick=()=>{
+   presets.splice(i,1);
+   localStorage.setItem("presets",JSON.stringify(presets));
+   showPresets();
+  };
+
+  row.append(label,load,del);
+  box.appendChild(row);
+ });
+}
+
+function changeName(){
+ const name=document.getElementById("newName").value.trim();
+ if(!name)return;
+ localStorage.setItem("nickname",name);
+ document.getElementById("nickname").textContent=name;
+ document.getElementById("newName").value="";
+}
+
+document.getElementById("nickname").textContent=
+localStorage.getItem("nickname")||"PLAYER FF";
+
+showPresets();
+render();
+</script>
+</body>
+  </html>
+  
